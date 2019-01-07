@@ -56,10 +56,8 @@ public class PassportController {
     @GetMapping("/login")
     public ModelAndView login(Model model) {
         Subject subject = SecurityUtils.getSubject();
-        logger.debug(">>>>>>>>>>>>>>>>>>>>>>>subject<<<<<<<<<<<<<<<<<<<<<<:{}",subject.getPrincipal());
         System.out.println(">>>>>>>>>>>>>>>>>>>>>>>PassportController subject<<<<<<<<<<<<<<<<<<<<<<"+subject.getPrincipal());
 
-        logger.debug(">>>>>>>>>>>>>>>>>>>>>>>subject.getSession<<<<<<<<<<<<<<<<<<<<<<:{}",subject.getSession());
         System.out.println(">>>>>>>>>>>>>>>>>>>>>>>PassportController getSession<<<<<<<<<<<<<<<<<<<<<<"+subject.getSession());
 
         if (subject.isAuthenticated()||subject.isRemembered()){
