@@ -28,7 +28,7 @@ package com.zyd.shiro.controller;
  * @date 2018/4/24 14:37
  * @since 1.0
  */
-import com.zyd.shiro.util.ResultUtil;
+import com.zyd.shiro.util.common.ResultUtil;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.servlet.ModelAndView;

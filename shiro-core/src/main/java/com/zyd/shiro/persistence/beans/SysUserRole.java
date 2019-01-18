@@ -20,10 +20,8 @@
 package com.zyd.shiro.persistence.beans;
 
 import com.zyd.shiro.framework.object.AbstractDO;
-import com.zyd.shiro.util.PasswordUtil;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.springframework.util.StringUtils;
 
 /**
  * @author yadong.zhang (yadong.zhang0415(a)gmail.com)

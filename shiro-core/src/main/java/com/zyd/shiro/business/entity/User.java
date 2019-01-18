@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.zyd.shiro.business.enums.*;
 import com.zyd.shiro.framework.object.AbstractBO;
 import com.zyd.shiro.persistence.beans.SysUser;
-import com.zyd.shiro.util.PasswordUtil;
+import com.zyd.shiro.util.common.PasswordUtil;
 import org.springframework.util.StringUtils;
 
 import java.util.Date;

@@ -29,7 +29,7 @@ import com.zyd.shiro.business.service.SysRoleService;
 import com.zyd.shiro.business.vo.RoleConditionVO;
 import com.zyd.shiro.framework.object.PageResult;
 import com.zyd.shiro.framework.object.ResponseVO;
-import com.zyd.shiro.util.ResultUtil;
+import com.zyd.shiro.util.common.ResultUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;

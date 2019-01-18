@@ -23,7 +23,7 @@ import com.zyd.shiro.business.consts.CommonConst;
 import com.zyd.shiro.business.enums.ResponseStatus;
 import com.zyd.shiro.framework.exception.ZhydException;
 import com.zyd.shiro.framework.object.ResponseVO;
-import com.zyd.shiro.util.ResultUtil;
+import com.zyd.shiro.util.common.ResultUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.ControllerAdvice;

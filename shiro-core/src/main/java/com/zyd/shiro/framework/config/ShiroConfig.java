@@ -22,6 +22,7 @@ package com.zyd.shiro.framework.config;
 import com.zyd.shiro.business.service.ShiroService;
 import com.zyd.shiro.business.shiro.credentials.RetryLimitCredentialsMatcher;
 import com.zyd.shiro.business.shiro.realm.ShiroRealm;
+import com.zyd.shiro.framework.jwt.JwtFilter;
 import com.zyd.shiro.framework.property.RedisProperties;
 import org.apache.shiro.codec.Base64;
 import org.apache.shiro.mgt.SecurityManager;
@@ -43,6 +44,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.core.annotation.Order;
 
+import javax.servlet.Filter;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -68,7 +71,21 @@ public class ShiroConfig {
     public static LifecycleBeanPostProcessor getLifecycleBeanPostProcessor() {
         return new LifecycleBeanPostProcessor();
     }
-
+    /**
+     * anon：无参，开放权限，可以理解为匿名用户或游客
+     * logout：无参，注销，执行后会直接跳转到shiroFilterFactoryBean.setLoginUrl(); 设置的 url
+     * authc：无参，需要认证
+     * authcBasic：无参，表示 httpBasic 认证
+     * user：无参，表示必须存在用户，当登入操作时不做检查
+     * ssl：无参，表示安全的URL请求，协议为 https
+     * perms[user]：参数可写多个，表示需要某个或某些权限才能通过，多个参数时写 perms["user, admin"]，当有多个参数时必须每个参数都通过才算通过
+     * roles[admin]：参数可写多个，表示是某个或某些角色才能通过，多个参数时写 roles["admin，user"]，当有多个参数时必须每个参数都通过才算通过
+     * rest[user]：根据请求的方法，相当于 perms[user:method]，其中 method 为 post，get，delete 等
+     * port[8081]：当请求的URL端口不是8081时，跳转到schemal://serverName:8081?queryString 其中 schmal 是协议 http 或 https 等等，
+     * serverName 是你访问的 Host，8081 是 Port 端口，queryString 是你访问的 URL 里的 ? 后面的参数
+     * @param securityManager
+     * @return
+     */
     /**
      * ShiroFilterFactoryBean 处理拦截资源文件问题。
      * 注意：单独一个ShiroFilterFactoryBean配置是或报错的，因为在
@@ -84,6 +101,11 @@ public class ShiroConfig {
     @Bean(name = "shiroFilter")
     public ShiroFilterFactoryBean shirFilter(SecurityManager securityManager) {
         ShiroFilterFactoryBean shiroFilterFactoryBean = new ShiroFilterFactoryBean();
+        Map<String, Filter> filterMap = new HashMap<>();
+        //设置我们自定义的JWT过滤器
+        filterMap.put("jwt", new JwtFilter());
+        shiroFilterFactoryBean.setFilters(filterMap);
+
         // 必须设置 SecurityManager
         shiroFilterFactoryBean.setSecurityManager(securityManager);
         // 如果不设置默认会自动寻找Web工程根目录下的"/login.jsp"页面

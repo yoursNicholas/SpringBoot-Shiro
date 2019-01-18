@@ -26,6 +26,10 @@ import com.zyd.shiro.business.enums.UserStatusEnum;
 import com.zyd.shiro.business.service.SysResourcesService;
 import com.zyd.shiro.business.service.SysRoleService;
 import com.zyd.shiro.business.service.SysUserService;
+import com.zyd.shiro.business.shiro.credentials.StatelessAuthenticationToken;
+import com.zyd.shiro.framework.common.Constant;
+import com.zyd.shiro.util.JwtUtil;
+import com.zyd.shiro.util.common.RedisTemplateUtil;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authz.AuthorizationInfo;
@@ -57,6 +61,13 @@ public class ShiroRealm extends AuthorizingRealm {
     private SysResourcesService resourcesService;
     @Resource
     private SysRoleService roleService;
+    /**
+     * 必须重写此方法，不然会报错
+     */
+    @Override
+    public boolean supports(AuthenticationToken token) {
+        return token instanceof StatelessAuthenticationToken;
+    }
 
     /**
      * 第二步
@@ -64,12 +75,17 @@ public class ShiroRealm extends AuthorizingRealm {
      * 认证回调函数,登录时调用.
      */
     @Override
-    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
-        //获取用户的输入的账号.
-        String username = (String) token.getPrincipal();
-        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>username<<<<<<<<<<<<<<<<<<<<:"+username);
+    protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token1) throws AuthenticationException {
+        RedisTemplateUtil redisTemplateUtil =new RedisTemplateUtil();
 
-        User user = userService.getByUserName(username);
+        StatelessAuthenticationToken token = (StatelessAuthenticationToken) token1;
+        String jwtToken = new String(token.getToken());
+
+        //获取用户的输入的账号.
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>username<<<<<<<<<<<<<<<<<<<<:"+jwtToken);
+        // 解密获得account，用于和数据库进行对比
+        String account = JwtUtil.getClaim(jwtToken, Constant.ACCOUNT);
+        User user = userService.getByUserName(account);
         System.out.println(">>>>>>>>>>>>>>>>>>>>>>>user<<<<<<<<<<<<<<<<<<<<:"+user.getId()+"---"+user.getPassword());
 
         if (user == null) {
@@ -78,14 +94,25 @@ public class ShiroRealm extends AuthorizingRealm {
         if (user.getStatus() != null && UserStatusEnum.DISABLE.getCode().equals(user.getStatus())) {
             throw new LockedAccountException("帐号已被锁定，禁止登录！");
         }
+        // 开始认证，要AccessToken认证通过，且Redis中存在RefreshToken，且两个Token时间戳一致
+        if (JwtUtil.verify(jwtToken) && redisTemplateUtil.hasKey(Constant.PREFIX_SHIRO_REFRESH_TOKEN + account)) {
+            // 获取RefreshToken的时间戳
+            String currentTimeMillisRedis = redisTemplateUtil.get(Constant.PREFIX_SHIRO_REFRESH_TOKEN + account).toString();
+            // 获取AccessToken时间戳，与RefreshToken的时间戳对比
+            if (JwtUtil.getClaim(jwtToken, Constant.CURRENT_TIME_MILLIS).equals(currentTimeMillisRedis)) {
+                // principal参数使用用户Id，方便动态刷新用户权限
+                System.out.println("doGetAuthenticationInfo getName()------------"+getName());
+                //从这里返回的值，在第四步里获取。info.getCredentials()
+                return new SimpleAuthenticationInfo(
+                        user.getId(),
+                        user.getPassword(),
+                        ByteSource.Util.bytes(user.getPassword()),
+                        getName()
 
-        // principal参数使用用户Id，方便动态刷新用户权限
-        return new SimpleAuthenticationInfo(
-                user.getId(),
-                user.getPassword(),
-                ByteSource.Util.bytes(username),
-                getName()
-        );
+                );
+            }
+        }
+        throw new AuthenticationException("Token已过期(Token expired or incorrect.)");
     }
 
     /**

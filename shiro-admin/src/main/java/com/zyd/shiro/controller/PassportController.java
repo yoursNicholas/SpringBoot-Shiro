@@ -1,30 +1,15 @@
-/**
- * MIT License
- * Copyright (c) 2018 yadong.zhang
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+
 package com.zyd.shiro.controller;
 
 import com.zyd.shiro.business.entity.User;
 import com.zyd.shiro.business.service.SysUserService;
+import com.zyd.shiro.business.shiro.credentials.StatelessAuthenticationToken;
 import com.zyd.shiro.framework.object.ResponseVO;
 import com.zyd.shiro.persistence.beans.SysUser;
-import com.zyd.shiro.util.ResultUtil;
+import com.zyd.shiro.util.JwtUtil;
+import com.zyd.shiro.util.common.ResultUtil;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
@@ -32,10 +17,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * 登录相关
@@ -76,26 +62,33 @@ public class PassportController {
     @PostMapping("/signin")
     @ResponseBody
     public ResponseVO submitLogin(@RequestParam(value = "username") String username,
-                                  @RequestParam(value = "password")  String password,@RequestParam(value = "rememberMe") boolean rememberMe,@RequestParam(value = "kaptcha") String kaptcha) {
-        UsernamePasswordToken token = new UsernamePasswordToken(username, password, rememberMe);
+                                  @RequestParam(value = "password")  String password, @RequestParam(value = "rememberMe",defaultValue ="false"
+    ) boolean rememberMe, HttpServletResponse httpServletResponse) {
+        //UsernamePasswordToken token = new UsernamePasswordToken(username, password, rememberMe);
+        JwtUtil jwtUtil = new JwtUtil();
+        // 设置RefreshToken，时间戳为当前时间戳，直接设置即可(不用先删后设，会覆盖已有的RefreshToken)
+        String currentTimeMillis = String.valueOf(System.currentTimeMillis());
+
+        String token = jwtUtil.sign(username, currentTimeMillis);
+        StatelessAuthenticationToken authenticationToken = new StatelessAuthenticationToken(username,password, token, rememberMe);
+
         //获取当前的Subject 一个http请求一个subject,并绑定到当前线程。
         Subject currentUser = SecurityUtils.getSubject();
-        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>PassportController currentUser<<<<<<<<<<<<<<<<<<<<<<"+(String) token.getPrincipal());
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>PassportController currentUser<<<<<<<<<<<<<<<<<<<<<<"+(String) authenticationToken.getPrincipal());
         try {
             //SecurityUtils.getSubject().login()这里是登陆调用开始，进入到Shiro内部后就会调用到 doGetAuthenticationInfo()登陆认证，
             // 成功登陆后调用 doGetAuthorizationInfo() 加载用户角色和权限（RBAC）。
             // 在调用了login方法后,SecurityManager会收到AuthenticationToken,并将其发送给已配置的Realm执行必须的认证检查
             // 每个Realm都能在必要时对提交的AuthenticationTokens作出反应
             // 所以这一步在调用login(token)方法时,它会走到xxRealm.doGetAuthenticationInfo()方法中,具体验证方式详见此方法
-            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>PassportController token<<<<<<<<<<<<<<<<<<<<<<");
-
-            currentUser.login(token);
+            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>PassportController token<<<<<<<<<<<<<<<<<<<<<<" + authenticationToken.getCredentials());
+            currentUser.login(authenticationToken);
             System.out.println(">>>>>>>>>>>>>>>>>>>>>>>PassportController login<<<<<<<<<<<<<<<<<<<<<<");
-
+            httpServletResponse.setHeader("Authorization", token);
+            httpServletResponse.setHeader("Access-Control-Expose-Headers", "Authorization");
             return ResultUtil.success("登录成功！");
         } catch (Exception e) {
             logger.error("登录失败，用户名[{}]", username, e);
-            token.clear();
             return ResultUtil.error("登录失败!用户名或密码错误！");
         }
     }

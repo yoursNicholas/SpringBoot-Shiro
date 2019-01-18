@@ -19,7 +19,7 @@
  */
 package com.zyd.shiro.business.shiro.credentials;
 
-import com.zyd.shiro.util.PasswordUtil;
+import com.zyd.shiro.util.common.PasswordUtil;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.UsernamePasswordToken;
@@ -47,7 +47,7 @@ public class CredentialsMatcher extends SimpleCredentialsMatcher {
      */
     @Override
     public boolean doCredentialsMatch(AuthenticationToken token, AuthenticationInfo info) {
-        UsernamePasswordToken utoken = (UsernamePasswordToken) token;
+        StatelessAuthenticationToken utoken = (StatelessAuthenticationToken) token;
         System.out.println(">>>>>>>>>>>>>>>>>>>>>>>utoken<<<<<<<<<<<<<<<<<<<<:"+utoken);
 
         //获得用户输入的密码:(可以采用加盐(salt)的方式去检验)
@@ -59,7 +59,6 @@ public class CredentialsMatcher extends SimpleCredentialsMatcher {
         String dbPassword = (String) info.getCredentials();
         LOGGER.debug(">>>>>>>>>>>>>>>>>>>>>>>dbPassword<<<<<<<<<<<<<<<<<<<<:{}",dbPassword);
         System.out.println(">>>>>>>>>>>>>>>>>>>>>>>dbPassword<<<<<<<<<<<<<<<<<<<<:"+dbPassword);
-        //ssss
         try {
             dbPassword = PasswordUtil.decrypt(dbPassword, utoken.getUsername());
         } catch (Exception e) {

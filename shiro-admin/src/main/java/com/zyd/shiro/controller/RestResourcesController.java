@@ -28,7 +28,7 @@ import com.zyd.shiro.business.service.SysResourcesService;
 import com.zyd.shiro.business.vo.ResourceConditionVO;
 import com.zyd.shiro.framework.object.PageResult;
 import com.zyd.shiro.framework.object.ResponseVO;
-import com.zyd.shiro.util.ResultUtil;
+import com.zyd.shiro.util.common.ResultUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
