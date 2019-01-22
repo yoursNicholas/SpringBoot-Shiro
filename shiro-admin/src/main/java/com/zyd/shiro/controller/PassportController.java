@@ -4,17 +4,18 @@ package com.zyd.shiro.controller;
 import com.zyd.shiro.business.entity.User;
 import com.zyd.shiro.business.service.SysUserService;
 import com.zyd.shiro.business.shiro.credentials.StatelessAuthenticationToken;
+import com.zyd.shiro.framework.common.Constant;
 import com.zyd.shiro.framework.object.ResponseVO;
 import com.zyd.shiro.persistence.beans.SysUser;
 import com.zyd.shiro.util.JwtUtil;
 import com.zyd.shiro.util.common.ResultUtil;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +23,7 @@ import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 登录相关
@@ -35,10 +37,19 @@ import javax.servlet.http.HttpServletResponse;
 @Controller
 @RequestMapping(value = "/passport")
 public class PassportController {
+
+    /**
+     * RefreshToken过期时间
+     */
+    @Value("${refreshTokenExpireTime}")
+    private String refreshTokenExpireTime;
+
     private static final Logger logger = LoggerFactory.getLogger(PassportController.class);
 
     @Autowired
     private SysUserService sysUserService;
+    @Autowired
+    private RedisTemplate redisTemplate;
     @GetMapping("/login")
     public ModelAndView login(Model model) {
         Subject subject = SecurityUtils.getSubject();
@@ -74,6 +85,12 @@ public class PassportController {
 
         //获取当前的Subject 一个http请求一个subject,并绑定到当前线程。
         Subject currentUser = SecurityUtils.getSubject();
+/*        if (redisTemplateUtil.hasKey(Constant.PREFIX_SHIRO_CACHE + username)) {
+            redisTemplateUtil.delete(Constant.PREFIX_SHIRO_CACHE + username);
+        }*/
+        // 设置RefreshToken，时间戳为当前时间戳，直接设置即可(不用先删后设，会覆盖已有的RefreshToken)
+        redisTemplate.opsForValue().set(Constant.PREFIX_SHIRO_REFRESH_TOKEN + username, currentTimeMillis, Integer.parseInt(refreshTokenExpireTime),TimeUnit.MILLISECONDS);
+
         System.out.println(">>>>>>>>>>>>>>>>>>>>>>>PassportController currentUser<<<<<<<<<<<<<<<<<<<<<<"+(String) authenticationToken.getPrincipal());
         try {
             //SecurityUtils.getSubject().login()这里是登陆调用开始，进入到Shiro内部后就会调用到 doGetAuthenticationInfo()登陆认证，

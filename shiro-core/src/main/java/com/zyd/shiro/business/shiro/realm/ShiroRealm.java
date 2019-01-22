@@ -38,6 +38,8 @@ import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.util.ByteSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -54,7 +56,8 @@ import java.util.List;
  * @since 1.0
  */
 public class ShiroRealm extends AuthorizingRealm {
-
+    @Autowired
+    private RedisTemplate redisTemplate;
     @Resource
     private SysUserService userService;
     @Resource
@@ -76,7 +79,6 @@ public class ShiroRealm extends AuthorizingRealm {
      */
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token1) throws AuthenticationException {
-        RedisTemplateUtil redisTemplateUtil =new RedisTemplateUtil();
 
         StatelessAuthenticationToken token = (StatelessAuthenticationToken) token1;
         String jwtToken = new String(token.getToken());
@@ -95,9 +97,9 @@ public class ShiroRealm extends AuthorizingRealm {
             throw new LockedAccountException("帐号已被锁定，禁止登录！");
         }
         // 开始认证，要AccessToken认证通过，且Redis中存在RefreshToken，且两个Token时间戳一致
-        if (JwtUtil.verify(jwtToken) && redisTemplateUtil.hasKey(Constant.PREFIX_SHIRO_REFRESH_TOKEN + account)) {
+        if (JwtUtil.verify(jwtToken) && redisTemplate.hasKey(Constant.PREFIX_SHIRO_REFRESH_TOKEN + account)) {
             // 获取RefreshToken的时间戳
-            String currentTimeMillisRedis = redisTemplateUtil.get(Constant.PREFIX_SHIRO_REFRESH_TOKEN + account).toString();
+            String currentTimeMillisRedis = redisTemplate.opsForValue().get(Constant.PREFIX_SHIRO_REFRESH_TOKEN + account).toString();
             // 获取AccessToken时间戳，与RefreshToken的时间戳对比
             if (JwtUtil.getClaim(jwtToken, Constant.CURRENT_TIME_MILLIS).equals(currentTimeMillisRedis)) {
                 // principal参数使用用户Id，方便动态刷新用户权限
