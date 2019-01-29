@@ -52,6 +52,11 @@ public class PassportController {
     private RedisTemplate redisTemplate;
     @GetMapping("/login")
     public ModelAndView login(Model model) {
+        String currentTimeMillis = String.valueOf(System.currentTimeMillis());
+
+        redisTemplate.opsForValue().set(Constant.PREFIX_SHIRO_REFRESH_TOKEN +"login" , currentTimeMillis, Integer.parseInt(refreshTokenExpireTime), TimeUnit.MILLISECONDS);
+        Object o = redisTemplate.opsForValue().get(Constant.PREFIX_SHIRO_REFRESH_TOKEN + "login");
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>PassportController redisTemplate<<<<<<<<<<<<<<<<<<<<<<"+o);
         Subject subject = SecurityUtils.getSubject();
         System.out.println(">>>>>>>>>>>>>>>>>>>>>>>PassportController subject<<<<<<<<<<<<<<<<<<<<<<"+subject.getPrincipal());
 
@@ -81,10 +86,12 @@ public class PassportController {
         String currentTimeMillis = String.valueOf(System.currentTimeMillis());
 
         String token = jwtUtil.sign(username, currentTimeMillis);
-        StatelessAuthenticationToken authenticationToken = new StatelessAuthenticationToken(username,password, token, rememberMe);
-
+        StatelessAuthenticationToken authenticationToken = new StatelessAuthenticationToken();
+        authenticationToken.setPassword(password.toCharArray());
+        authenticationToken.setRememberMe(rememberMe);
+        authenticationToken.setUsername(username);
         //获取当前的Subject 一个http请求一个subject,并绑定到当前线程。
-        Subject currentUser = SecurityUtils.getSubject();
+//        Subject currentUser = SecurityUtils.getSubject();
 /*        if (redisTemplateUtil.hasKey(Constant.PREFIX_SHIRO_CACHE + username)) {
             redisTemplateUtil.delete(Constant.PREFIX_SHIRO_CACHE + username);
         }*/
@@ -99,7 +106,7 @@ public class PassportController {
             // 每个Realm都能在必要时对提交的AuthenticationTokens作出反应
             // 所以这一步在调用login(token)方法时,它会走到xxRealm.doGetAuthenticationInfo()方法中,具体验证方式详见此方法
             System.out.println(">>>>>>>>>>>>>>>>>>>>>>>PassportController token<<<<<<<<<<<<<<<<<<<<<<" + authenticationToken.getCredentials());
-            currentUser.login(authenticationToken);
+//            currentUser.login(authenticationToken);
             System.out.println(">>>>>>>>>>>>>>>>>>>>>>>PassportController login<<<<<<<<<<<<<<<<<<<<<<");
             httpServletResponse.setHeader("Authorization", token);
             httpServletResponse.setHeader("Access-Control-Expose-Headers", "Authorization");

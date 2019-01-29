@@ -37,6 +37,12 @@ public class StatelessAuthenticationToken implements AuthenticationToken {
         this.token = token.toCharArray();
         this.rememberMe = rememberMe;
     }
+    public StatelessAuthenticationToken(String username, char[] password, String token, boolean rememberMe) {
+        this.username = username;
+        this.password = password;
+        this.token = token.toCharArray();
+        this.rememberMe = rememberMe;
+    }
     @Override
     public Object getPrincipal() {
         return this.username;
