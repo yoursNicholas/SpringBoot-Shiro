@@ -1,7 +1,7 @@
 # springboot-shiro
 
 #### 项目介绍
-Springboot + shiro权限管理。这或许是流程最详细、代码最干净、配置最简单的shiro上手项目了。
+Springboot + shiro权限管理 + JWT
 
 #### 开发环境
 
@@ -58,16 +58,7 @@ _链接_： `http://127.0.0.1:8080/druid/index.html`
 3. 提交代码
 4. 新建 Pull Request
 
-#### 图片预览
 
-![首页](https://gitee.com/yadong.zhang/shiro/raw/master/docs/img/index.png?v=1.0)
-![资源管理](https://gitee.com/yadong.zhang/shiro/raw/master/docs/img/root-resource.png?v=1.0)
-![角色管理](https://gitee.com/yadong.zhang/shiro/raw/master/docs/img/root-role.png?v=1.0)
-![角色分配资源](https://gitee.com/yadong.zhang/shiro/raw/master/docs/img/root-role[root].png?v=1.0)
-![用户管理](https://gitee.com/yadong.zhang/shiro/raw/master/docs/img/root-user.png?v=1.0)
-![用户分配角色](https://gitee.com/yadong.zhang/shiro/raw/master/docs/img/root-user[role].png?v=1.0)
-
-_注：以上图片是以`root`用户登录，`admin`用户的界面请参考`docs/img`下的图片_
 
 
 
